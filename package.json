@@ -1,0 +1,14 @@
+{
+  "name": "minirag",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "tsup": "^8.5.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "sqlite-vec": "^0.1.7-alpha.2"
+  }
+}
