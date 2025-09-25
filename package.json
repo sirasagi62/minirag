@@ -2,13 +2,14 @@
   "name": "minirag",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.2.22",
     "tsup": "^8.5.0"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.7.3",
     "sqlite-vec": "^0.1.7-alpha.2"
   }
 }

@@ -49,7 +49,7 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       content TEXT NOT NULL,
       filepath TEXT NOT NULL,
-      metadata TEXT,
+      metadata JSON,
       embedding BLOB NOT NULL
     );
     `);
@@ -158,7 +158,7 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
         c.id,
         c.content,
         c.filepath,
-        c.metadata,
+        json(c.metadata) as metadata,
         v.distance as distance
       FROM vec_index v
       JOIN q ON 1=1
