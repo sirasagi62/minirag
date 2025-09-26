@@ -1,6 +1,6 @@
 {
   "name": "minirag",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A ready-to-use vector database/RAG TypeScript library implemented with SQLite and @huggingface/transformers.",
   "keywords": [
     "Typescript",
@@ -34,7 +34,7 @@
     "@types/bun": "^1.2.22",
     "tsup": "^8.5.0"
   },
- "dependencies": {
+  "dependencies": {
     "@huggingface/transformers": "^3.7.3",
     "better-sqlite3": "^12.4.1",
     "sqlite-vec": "^0.1.7-alpha.2"
