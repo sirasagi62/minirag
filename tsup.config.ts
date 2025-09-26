@@ -1,8 +1,9 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['db.ts'],
-  format: ['esm', 'cjs'],
+  entry: ['src/index.ts'],
+  format: ['esm'],
+  external: ["bun:sqlite"],
   dts: true,
   splitting: false,
   sourcemap: true,

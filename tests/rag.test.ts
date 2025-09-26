@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
-import { RAGDatabase, type BaseMetadata } from "../db";
+import { RAGDatabase, type BaseMetadata } from "../src/db";
+import { type IEmbeddingModel } from "../src/embedding";
 
 // カスタムメタデータ型の定義
 type TestMetadata = BaseMetadata & {
@@ -7,8 +8,30 @@ type TestMetadata = BaseMetadata & {
   tags: string[];
 };
 
+// モックのembeddingモデルを作成
+class MockEmbeddingModel implements IEmbeddingModel {
+  modelname: string = "mock-model";
+  dim: number = 2;
+
+  async embedding(text: string): Promise<Float32Array> {
+    const embedding = new Float32Array(this.dim);
+    if (text.includes("test chunk")) {
+      embedding[0] = 1.0;
+      embedding[1] = 0.5;
+    } else if (text.includes("First test")) {
+      embedding[0] = 1.0;
+      embedding[1] = 0.5;
+    } else if (text.includes("Second test")) {
+      embedding[0] = 2.0;
+      embedding[1] = 1.5;
+    }
+    return embedding;
+  }
+}
+
 test("RAGDatabase initialization", () => {
-  const ragDb = new RAGDatabase<TestMetadata>({
+  const embeddingModel = new MockEmbeddingModel();
+  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });
@@ -17,8 +40,9 @@ test("RAGDatabase initialization", () => {
   ragDb.close();
 });
 
-test("insertChunk and searchSimilar", () => {
-  const ragDb = new RAGDatabase<TestMetadata>({
+test("insertChunk and searchSimilar", async () => {
+  const embeddingModel = new MockEmbeddingModel();
+  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });
@@ -31,25 +55,11 @@ test("insertChunk and searchSimilar", () => {
     tags: ["tag1", "tag2"]
   };
 
-  const embedding = new Float32Array(2);
-  embedding[0] = 1.0;
-  embedding[1] = 0.5;
-
-  const chunkWithEmbedding = {
-    ...chunk,
-    embedding
-  };
-
-  const id = ragDb.insertChunk(chunkWithEmbedding);
+  const id = await ragDb.insertChunk(chunk);
   expect(id).toBe(1);
 
-  // 検索クエリ用のembedding
-  const queryEmbedding = new Float32Array(2);
-  queryEmbedding[0] = 1.0;
-  queryEmbedding[1] = 0.5;
-
-  // 類似チャンクを検索
-  const results = ragDb.searchSimilar(queryEmbedding, 5);
+  // 検索クエリ
+  const results = await ragDb.searchSimilar("test query", 5);
   expect(results.length).toBe(1);
 
   const result = results[0];
@@ -62,8 +72,9 @@ test("insertChunk and searchSimilar", () => {
   ragDb.close();
 });
 
-test("bulkInsertChunks", () => {
-  const ragDb = new RAGDatabase<TestMetadata>({
+test("bulkInsertChunks", async () => {
+  const embeddingModel = new MockEmbeddingModel();
+  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });
@@ -84,36 +95,23 @@ test("bulkInsertChunks", () => {
     }
   ];
 
-  // embeddingを追加
-  const chunksWithEmbeddings = chunks.map((chunk, index) => {
-    const embedding = new Float32Array(2);
-    embedding[0] = index + 1;
-    embedding[1] = 0.5 + index;
-
-    return {
-      ...chunk,
-      embedding
-    };
-  });
-
   // バルク挿入
-  ragDb.bulkInsertChunks(chunksWithEmbeddings);
+  await ragDb.bulkInsertChunks(chunks);
 
-  // 検索クエリ用のembedding
-  const queryEmbedding = new Float32Array(2);
-  queryEmbedding[0] = 1.0;
-  queryEmbedding[1] = 0.5;
-
-  // 類似チャンクを検索
-  const results = ragDb.searchSimilar(queryEmbedding, 5).sort((a, b) => a.distance - b.distance);
+  // 検索クエリ
+  const results = await ragDb.searchSimilar("test query", 5);
   expect(results.length).toBe(2);
-  const firstResult = results[0];
+
+  // ソートして距離が近い順に並べる
+  const sortedResults = results.sort((a, b) => a.distance - b.distance);
+
+  const firstResult = sortedResults[0];
   expect(firstResult?.content).toBe("First test chunk");
   expect(firstResult?.filepath).toBe("/test/file1.ts");
   expect(firstResult?.category).toBe("test1");
   expect(firstResult?.tags).toEqual(["tag1"]);
 
-  const secondResult = results[1];
+  const secondResult = sortedResults[1];
   expect(secondResult?.content).toBe("Second test chunk");
   expect(secondResult?.filepath).toBe("/test/file2.ts");
   expect(secondResult?.category).toBe("test2");

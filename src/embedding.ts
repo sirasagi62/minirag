@@ -1,8 +1,9 @@
-import { env, pipeline } from "@huggingface/transformers";
-
-type EmbeddingFunction = (txt: string) => Promise<Float32Array>;
-
-type DType =
+import {
+  env,
+  FeatureExtractionPipeline,
+  pipeline,
+} from "@huggingface/transformers";
+export type DType =
   | "auto"
   | "fp32"
   | "fp16"
@@ -12,27 +13,32 @@ type DType =
   | "q4"
   | "bnb4"
   | "q4f16";
-  
+
 // Set environment variables for transformers.js
 env.allowRemoteModels = true; // Allow fetching models from Hugging Face Hub if not found locally
 
-// Initialize the embedding pipeline
-const embeddingPipeline = await pipeline(
-  "feature-extraction",
-  "sirasagi62/granite-embedding-107m-multilingual-ONNX",
-  { dtype: "q8" }
-);
 
-class HFLocalEmbeddingModel {
+export interface IEmbeddingModel {
+  modelname: string;
+  dim: number;
+  embedding: (text: string) => Promise<Float32Array>
+}
+
+/**
+ * Fetch an open model hosted on HuggingFace and perform embedding locally.
+ * Use the `init` function for initialization.
+ */
+export class HFLocalEmbeddingModel implements IEmbeddingModel {
   modelname: string;
   dim: number;
   dtype?: DType;
+  embeddingPipeline?: FeatureExtractionPipeline;
 
   /**
-   * constructor of HFLocalEmbeddingModel
-   * @param modelname Model name on HuggingFace
-   * @param dim Dimension of embedding
-   * @param dtype Quantization methods
+   * !WARNING: This is intented for internal use. Use `init` static method instead.
+   * @param modelname
+   * @param dim
+   * @param dtype
    */
   constructor(modelname: string, dim: number, dtype?: DType) {
     this.modelname = modelname;
@@ -41,13 +47,38 @@ class HFLocalEmbeddingModel {
   }
 
   /**
+   * initializer of HFLocalEmbeddingModel
+   * @param modelname Model name on HuggingFace
+   * @param dim Dimension of embedding
+   * @param dtype Quantization methods
+   */
+  public static async init(
+    modelname: string,
+    dim: number,
+    dtype?: DType
+  ): Promise<HFLocalEmbeddingModel> {
+    const model = new HFLocalEmbeddingModel(modelname, dim, dtype);
+    model.embeddingPipeline = await pipeline(
+      "feature-extraction",
+      model.modelname,
+      { dtype: model.dtype }
+    );
+    return model;
+  }
+
+  /**
    * Function to calculate embeddings using the transformers pipeline
-   * @param text 
-   * @returns 
+   * @param text
+   * @returns
    */
   async embedding(text: string): Promise<Float32Array> {
     try {
-      const output = await embeddingPipeline(text, {
+      if (!this.embeddingPipeline) {
+        throw new Error(
+          "The `HFLocalEmbeddingModel` class must be initialized using the `init` function; do not call the constructor directly."
+        );
+      }
+      const output = await this.embeddingPipeline(text, {
         pooling: "mean",
         normalize: true,
       });
@@ -76,4 +107,3 @@ class HFLocalEmbeddingModel {
     }
   }
 }
-

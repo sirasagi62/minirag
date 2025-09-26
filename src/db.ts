@@ -1,6 +1,19 @@
 // db.ts
-import Database from "bun:sqlite";
+// Bunの場合はbun:sqlite、Node.jsの場合はbetter-sqlite3を使用
 import * as sqliteVec from "sqlite-vec";
+import type { IEmbeddingModel } from "./embedding";
+
+let Database: any;
+
+if (process.versions.bun) {
+  // Bun の場合
+  const { Database: BunDatabase } = await import("bun:sqlite");
+  Database = BunDatabase;
+} else {
+  // Node.js の場合
+  const BetterSqlite3 = (await import("better-sqlite3")).default;
+  Database = BetterSqlite3;
+}
 
 // ユーザー定義メタデータ型
 export type BaseMetadata = {
@@ -31,14 +44,16 @@ export type SearchResult<T extends BaseMetadata = BaseMetadata> = T & {
 };
 
 export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
-  private db: Database;
+  private db: typeof Database;
   private embeddingDim: number;
+  private embeddingModel: IEmbeddingModel;
 
-  constructor(options: RAGOptions = {}) {
+  constructor(embeddingModel: IEmbeddingModel, options: RAGOptions = {}) {
     const dbPath = options.dbPath || DEFAULT_DB_PATH;
     this.embeddingDim = options.embeddingDim || DEFAULT_EMBEDDING_DIM;
 
     this.db = new Database(dbPath);
+    this.embeddingModel = embeddingModel
 
     // load sqlite-vec extension/wrapping (this registers functions / virtual tables)
     sqliteVec.load(this.db);
@@ -98,12 +113,8 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
     return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
   }
 
-  private bufferToFloat32(buf: Buffer): Float32Array {
-    return new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4);
-  }
-
   // チャンク挿入関数（Generics対応）
-  insertChunk(chunk: ChunkRow<T>): number {
+  insertChunkWithEmbedding(chunk: ChunkRow<T>): number {
     this.assertEmbeddingDim(chunk.embedding);
     const buf = this.float32ToBuffer(chunk.embedding);
 
@@ -120,7 +131,7 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
   }
 
   // バルク挿入関数（Generics対応）
-  bulkInsertChunks(chunks: ChunkRow<T>[], batchSize = 500) {
+  bulkInsertChunksWithEmbdding(chunks: ChunkRow<T>[], batchSize = 500) {
     // chunked batch insert to avoid giant single statement / memory spikes
     const insertOne = this.db.prepare(
       `INSERT INTO chunks (content, filepath, metadata, embedding)
@@ -146,7 +157,7 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
   }
 
   // 類似チャンク検索関数（Generics対応）
-  searchSimilar(queryEmbedding: Float32Array, k = 5): SearchResult<T>[] {
+  searchSimilarByEmbedding(queryEmbedding: Float32Array, k = 5): SearchResult<T>[] {
     this.assertEmbeddingDim(queryEmbedding);
     const qBuf = this.float32ToBuffer(queryEmbedding);
 
@@ -181,6 +192,32 @@ export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
         distance: Number(r.distance)
       } as SearchResult<T>;
     });
+  }
+
+  async insertChunk(inputChunk: T): Promise<number> {
+    const embedding = await this.embeddingModel.embedding(inputChunk.content)
+    return this.insertChunkWithEmbedding(
+      {
+        ...inputChunk,
+        embedding
+      }
+    )
+  }
+
+  async bulkInsertChunks(inputChunks: T[], batchSize = 500) {
+    const chunksWithEmbedding: ChunkRow<T>[] = await Promise.all(inputChunks.map(async c => {
+      const embedding = await this.embeddingModel.embedding(c.content)
+      return {
+        ...c,
+        embedding
+      }
+    }))
+    return this.bulkInsertChunksWithEmbdding(chunksWithEmbedding, batchSize)
+  }
+
+  async searchSimilar(query: string, k = 5): Promise<SearchResult<T>[]> {
+    const queryEmbedding = await this.embeddingModel.embedding(query)
+    return this.searchSimilarByEmbedding(queryEmbedding, k)
   }
 
   close() {

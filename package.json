@@ -1,15 +1,45 @@
 {
   "name": "minirag",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "^1.2.22",
-    "tsup": "^8.5.0"
+  "version": "0.1.0",
+  "description": "A ready-to-use vector database/RAG TypeScript library implemented with SQLite and @huggingface/transformers.",
+  "keywords": [
+    "Typescript",
+    "typescript",
+    "sqlite",
+    "minirag",
+    "rag",
+    "mini-rag",
+    "llm",
+    "embedding",
+    "ai"
+  ],
+  "homepage": "https://github.com/sirasagi62/minirag#readme",
+  "bugs": {
+    "url": "https://github.com/sirasagi62/minirag/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sirasagi62/minirag.git"
+  },
+  "license": "MIT",
+  "author": "OKABE Gota",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "peerDependencies": {
     "typescript": "^5"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/bun": "^1.2.22",
+    "tsup": "^8.5.0"
+  },
+ "dependencies": {
     "@huggingface/transformers": "^3.7.3",
+    "better-sqlite3": "^12.4.1",
     "sqlite-vec": "^0.1.7-alpha.2"
+  },
+  "scripts": {
+    "build": "tsup"
   }
 }

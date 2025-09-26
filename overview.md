@@ -44,7 +44,10 @@ The dependency list is intentionally minimal, focusing on essential components f
 
 ```
 minirag/
-├── db.ts                    # Core RAG database implementation
+├── src/                     # Source
+│   ├── db.ts                # Core RAG database implementation
+│   ├── embedding.ts         # Embedding generation and management
+│   └── index.ts             # index.ts
 ├── tests/                   # Test suite
 │   └── rag.test.ts          # Unit tests for RAG functionality
 ├── api.md                   # API documentation
@@ -58,7 +61,8 @@ minirag/
 
 ### Key Files
 
-- **db.ts**: Contains the main `RAGDatabase` class implementation with all core functionality including chunk insertion, bulk insertion, and similarity search.
+- **src/db.ts**: Contains the main `RAGDatabase` class implementation with all core functionality including chunk insertion, bulk insertion, and similarity search.
+- **src/embedding.ts**: Handles embedding generation and management, providing utilities for text vectorization.
 - **tests/rag.test.ts**: Comprehensive tests verifying database initialization, chunk insertion, search functionality, and bulk operations.
 - **api.md**: Detailed documentation of the public API with usage examples.
 - **README.md**: Quick start guide with installation and basic usage instructions.
