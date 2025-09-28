@@ -61,7 +61,7 @@ veqlite/
 
 ### Key Files
 
-- **src/db.ts**: Contains the main `RAGDatabase` class implementation with all core functionality including chunk insertion, bulk insertion, and similarity search.
+- **src/db.ts**: Contains the main `VeqliteDB` class implementation with all core functionality including chunk insertion, bulk insertion, and similarity search.
 - **src/embedding.ts**: Handles embedding generation and management, providing utilities for text vectorization.
 - **tests/rag.test.ts**: Comprehensive tests verifying database initialization, chunk insertion, search functionality, and bulk operations.
 - **api.md**: Detailed documentation of the public API with usage examples.

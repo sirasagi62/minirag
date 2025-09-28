@@ -43,7 +43,7 @@ export type SearchResult<T extends BaseMetadata = BaseMetadata> = T & {
   distance: number;
 };
 
-export class RAGDatabase<T extends BaseMetadata = BaseMetadata> {
+export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
   private db: typeof Database;
   private embeddingDim: number;
   private embeddingModel: IEmbeddingModel;

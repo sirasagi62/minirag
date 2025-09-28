@@ -15,10 +15,10 @@ For more details about the project structure and API, see [overview.md](./overvi
 
 # example
 ```typescript
-import { RAGDatabase } from "../src/db";
+import { VeqliteDB } from "../src/db";
 import { HFLocalEmbeddingModel } from "../src/embedding";
 
-// Simple example of using MiniRAG
+// Simple example of using veqlite
 async function main() {
   // Initialize the embedding model
   const embeddingModel = await HFLocalEmbeddingModel.init(
@@ -28,7 +28,7 @@ async function main() {
   );
 
   // Create RAG database instance
-  const rag = new RAGDatabase(embeddingModel,{
+  const rag = new VeqliteDB(embeddingModel,{
     // Use in-memory database
     dbPath: ":memory:"
   });

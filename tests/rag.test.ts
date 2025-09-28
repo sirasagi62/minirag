@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { RAGDatabase, type BaseMetadata } from "../src/db";
+import { VeqliteDB, type BaseMetadata } from "../src/db";
 import { type IEmbeddingModel } from "../src/embedding";
 
 // カスタムメタデータ型の定義
@@ -29,9 +29,9 @@ class MockEmbeddingModel implements IEmbeddingModel {
   }
 }
 
-test("RAGDatabase initialization", () => {
+test("VeqliteDB initialization", () => {
   const embeddingModel = new MockEmbeddingModel();
-  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
+  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });
@@ -42,7 +42,7 @@ test("RAGDatabase initialization", () => {
 
 test("insertChunk and searchSimilar", async () => {
   const embeddingModel = new MockEmbeddingModel();
-  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
+  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });
@@ -74,7 +74,7 @@ test("insertChunk and searchSimilar", async () => {
 
 test("bulkInsertChunks", async () => {
   const embeddingModel = new MockEmbeddingModel();
-  const ragDb = new RAGDatabase<TestMetadata>(embeddingModel, {
+  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel, {
     dbPath: ":memory:",
     embeddingDim: 2
   });

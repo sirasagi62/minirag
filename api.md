@@ -1,6 +1,6 @@
 # API Documentation
 
-## RAGDatabase<T>
+## VeqliteDB<T>
 
 A minimal RAG (Retrieval-Augmented Generation) database implementation using SQLite with the sqlite-vec extension for vector similarity search.
 
@@ -28,7 +28,7 @@ const embeddingModel = await HFLocalEmbeddingModel.init(
 );
 
 // Create a RAG database instance
-const ragDb = new RAGDatabase(embeddingModel, {
+const ragDb = new VeqliteDB(embeddingModel, {
   dbPath: ":memory:",
   embeddingDim: 384
 });
