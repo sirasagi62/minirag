@@ -2,7 +2,7 @@
 
 ## Purpose
 
-minirag is a minimal implementation of a Retrieval-Augmented Generation (RAG) database system built on Bun.js and SQLite. It provides a lightweight solution for storing text chunks with vector embeddings and performing fast similarity searches using cosine distance. The project is designed to be simple, efficient, and easy to integrate into applications that require semantic search capabilities.
+veqlite is a minimal implementation of a Retrieval-Augmented Generation (RAG) database system built on Bun.js and SQLite. It provides a lightweight solution for storing text chunks with vector embeddings and performing fast similarity searches using cosine distance. The project is designed to be simple, efficient, and easy to integrate into applications that require semantic search capabilities.
 
 The core functionality enables developers to:
 - Store documents or text chunks with their vector embeddings
@@ -14,7 +14,7 @@ This implementation leverages SQLite's virtual table extensions through sqlite-v
 
 ## Project Structure
 
-minirag follows a simple and focused architecture:
+veqlite follows a simple and focused architecture:
 
 - **Core Database**: Built on Bun's native SQLite support with sqlite-vec extension for vector operations
 - **Schema Design**: Uses two main components - a regular table for storing chunk data and a virtual table for vector indexing
@@ -43,7 +43,7 @@ The dependency list is intentionally minimal, focusing on essential components f
 ## File Structure
 
 ```
-minirag/
+veqlite/
 ├── src/                     # Source
 │   ├── db.ts                # Core RAG database implementation
 │   ├── embedding.ts         # Embedding generation and management

@@ -1,25 +1,25 @@
 {
-  "name": "minirag",
-  "version": "0.1.1",
+  "name": "veqlite",
+  "version": "0.1.0",
   "description": "A ready-to-use vector database/RAG TypeScript library implemented with SQLite and @huggingface/transformers.",
   "keywords": [
     "Typescript",
     "typescript",
     "sqlite",
-    "minirag",
+    "veqlite",
     "rag",
     "mini-rag",
     "llm",
     "embedding",
     "ai"
   ],
-  "homepage": "https://github.com/sirasagi62/minirag#readme",
+  "homepage": "https://github.com/sirasagi62/veqlite#readme",
   "bugs": {
-    "url": "https://github.com/sirasagi62/minirag/issues"
+    "url": "https://github.com/sirasagi62/veqlite/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sirasagi62/minirag.git"
+    "url": "git+https://github.com/sirasagi62/veqlite.git"
   },
   "license": "MIT",
   "author": "OKABE Gota",

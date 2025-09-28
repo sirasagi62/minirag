@@ -1,4 +1,4 @@
-# minirag
+# veqlite
 
 A minimal RAG (Retrieval-Augmented Generation) database library written in TypeScript using SQLite with the sqlite-vec extension for vector similarity search.
 
@@ -44,7 +44,7 @@ async function main() {
   });
   await rag.insertChunk({
     content: "Minirag is a simple RAG implementation in TypeScript",
-    filepath: "minirag-intro"
+    filepath: "veqlite-intro"
   });
 
   const query = "What is RAG?"
@@ -81,11 +81,11 @@ bun run examples/simple.ts
 You can use the library on Node.js/bun.
 
 ```bash
-npm install minirag
+npm install veqlite
 
-pnpm install minirag
+pnpm install veqlite
 
-bun add minirag
+bun add veqlite
 ```
 
 # development

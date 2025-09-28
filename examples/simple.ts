@@ -27,7 +27,7 @@ async function main() {
   });
   await rag.insertChunk({
     content: "Minirag is a simple RAG implementation in TypeScript",
-    filepath: "minirag-intro"
+    filepath: "veqlite-intro"
   });
 
   const query = "What is RAG?"
