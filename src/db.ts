@@ -59,7 +59,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     sqliteVec.load(this.db);
 
     // --- Schema ---
-    this.db.run(`
+    this.db.exec(`
     CREATE TABLE IF NOT EXISTS chunks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       content TEXT NOT NULL,
@@ -70,28 +70,28 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     `);
 
     // vec0 virtual table for indexing vectors
-    this.db.run(`
+    this.db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS vec_index USING vec0(
       embedding float[${this.embeddingDim}] distance_metric=cosine
     );
     `);
 
     // triggers to keep vec_index in sync with chunks
-    this.db.run(`
+    this.db.exec(`
     CREATE TRIGGER IF NOT EXISTS chunks_after_insert
     AFTER INSERT ON chunks
     BEGIN
       INSERT INTO vec_index(rowid, embedding) VALUES (new.id, new.embedding);
     END;
     `);
-    this.db.run(`
+    this.db.exec(`
     CREATE TRIGGER IF NOT EXISTS chunks_after_delete
     AFTER DELETE ON chunks
     BEGIN
       DELETE FROM vec_index WHERE rowid = old.id;
     END;
     `);
-    this.db.run(`
+    this.db.exec(`
     CREATE TRIGGER IF NOT EXISTS chunks_after_update
     AFTER UPDATE ON chunks
     BEGIN

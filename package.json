@@ -37,7 +37,8 @@
   "dependencies": {
     "@huggingface/transformers": "^3.7.3",
     "better-sqlite3": "^12.4.1",
-    "sqlite-vec": "^0.1.7-alpha.2"
+    "sqlite-vec": "^0.1.7-alpha.2",
+    "ts-node": "^10.9.2"
   },
   "scripts": {
     "build": "tsup"
