@@ -2,7 +2,7 @@
 
 ## VeqliteDB<T>
 
-A minimal RAG (Retrieval-Augmented Generation) database implementation using SQLite with the sqlite-vec extension for vector similarity search.
+A minimal vector database implementation using SQLite with the sqlite-vec extension.
 
 ### Constructor
 
@@ -10,7 +10,7 @@ A minimal RAG (Retrieval-Augmented Generation) database implementation using SQL
 constructor(embeddingModel: IEmbeddingModel, options: RAGOptions = {})
 ```
 
-Initializes a new RAG database instance.
+Initializes a new vector database instance.
 
 **Parameters:**
 - `embeddingModel`: An instance of an embedding model that implements the IEmbeddingModel interface

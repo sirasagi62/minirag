@@ -1,6 +1,6 @@
 # veqlite
 
-A minimal RAG (Retrieval-Augmented Generation) database library written in TypeScript using SQLite with the sqlite-vec extension for vector similarity search.
+A simple vector database library written in TypeScript using SQLite with the sqlite-vec extension.
 
 Features:
 - Store text chunks with metadata and embeddings

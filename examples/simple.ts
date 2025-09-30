@@ -1,5 +1,4 @@
-import { VeqliteDB } from "../src/db";
-import { HFLocalEmbeddingModel } from "../src/embedding";
+import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
 
 // Simple example of using veqlite
 async function main() {
