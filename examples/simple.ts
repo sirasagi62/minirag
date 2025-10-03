@@ -12,6 +12,7 @@ async function main() {
   // Create RAG database instance
   const rag = new VeqliteDB(embeddingModel,{
     // Use in-memory database
+    embeddingDim: 384,
     dbPath: ":memory:"
   });
 
