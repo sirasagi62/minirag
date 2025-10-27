@@ -1,11 +1,13 @@
 import type { SQLiteDatabase, DatabaseStatement } from "../db";
-import BetterSqlite3 from "better-sqlite3";
+import Database, { DatabaseSync } from "node:sqlite";
 
 export class NodeSQLiteAdapter implements SQLiteDatabase {
-  private db: BetterSqlite3.Database;
+  private db: DatabaseSync;
 
   constructor(path: string) {
-    this.db = new BetterSqlite3(path);
+    this.db = new DatabaseSync(path, {
+      allowExtension: true
+    });
     this.loadVecExtension();
   }
 
@@ -21,17 +23,20 @@ export class NodeSQLiteAdapter implements SQLiteDatabase {
   prepare(sql: string): DatabaseStatement {
     const stmt = this.db.prepare(sql);
     return {
-      run: (...args) => {
-        const result = stmt.run(...args);
-        return { lastInsertRowid: this.db.lastInsertRowid };
-      },
+      run: (...args) => stmt.run(...args),
       all: (...args) => stmt.all(...args),
     };
   }
 
-  transaction<T>(fn: (batch: any[]) => T): (batch: any[]) => T {
-    const tx = this.db.transaction(fn);
+
+  transaction(fn: (batch: any[]) => void): (batch: any[]) => void {
+    const tx = (_batch: any[]) => {
+      this.db.exec("BEGIN")
+      fn(_batch)
+      this.db.exec("END")
+    }
     return tx;
+
   }
 
   close(): void {

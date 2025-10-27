@@ -31,12 +31,12 @@ export type SearchResult<T extends BaseMetadata = BaseMetadata> = T & {
 export interface SQLiteDatabase {
   exec(sql: string): void;
   prepare(sql: string): DatabaseStatement;
-  transaction<T>(fn: (batch: any[]) => T): (batch: any[]) => T;
+  transaction(fn: (batch: any[]) => void): (batch: any[]) => void;
   close(): void;
 }
 
 export interface DatabaseStatement {
-  run(...params: any[]): { lastInsertRowid?: number };
+  run(...params: any[]): void;
   all(...params: any[]): any[];
 }
 
@@ -113,7 +113,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
   }
 
   // チャンク挿入関数（Generics対応）
-  insertChunkWithEmbedding(chunk: ChunkRow<T>): number {
+  insertChunkWithEmbedding(chunk: ChunkRow<T>): void {
     this.assertEmbeddingDim(chunk.embedding);
     const buf = this.float32ToBuffer(chunk.embedding);
 
@@ -125,8 +125,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
       `INSERT INTO chunks (content, filepath, metadata, embedding)
        VALUES (?, ?, ?, ?)`
     );
-    const info = stmt.run(content, filepath, metadataStr, buf);
-    return Number(info.lastInsertRowid);
+    stmt.run(content, filepath, metadataStr, buf);
   }
 
   // バルク挿入関数（Generics対応）
@@ -193,7 +192,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     });
   }
 
-  async insertChunk(inputChunk: T): Promise<number> {
+  async insertChunk(inputChunk: T): Promise<void> {
     const embedding = await this.embeddingModel.embedding(inputChunk.content)
     return this.insertChunkWithEmbedding(
       {
@@ -220,6 +219,6 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
   }
 
   close() {
-    this.db.close();
+    return this.db.close();
   }
 }

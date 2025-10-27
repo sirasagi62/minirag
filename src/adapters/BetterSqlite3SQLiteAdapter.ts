@@ -1,10 +1,11 @@
 import type { SQLiteDatabase, DatabaseStatement } from "../db";
-import Database from "bun:sqlite"
-export class BunSQLiteAdapter implements SQLiteDatabase {
-  private db: Database;
+import BetterSqlite3 from "better-sqlite3";
+
+export class NodeSQLiteAdapter implements SQLiteDatabase {
+  private db: BetterSqlite3.Database;
 
   constructor(path: string) {
-    this.db = new Database(path);
+    this.db = new BetterSqlite3(path);
     this.loadVecExtension();
   }
 
@@ -14,7 +15,7 @@ export class BunSQLiteAdapter implements SQLiteDatabase {
   }
 
   exec(sql: string): void {
-    this.db.run(sql);
+    this.db.exec(sql);
   }
 
   prepare(sql: string): DatabaseStatement {
