@@ -1,20 +1,4 @@
 // db.ts
-// Bunの場合はbun:sqlite、Node.jsの場合はbetter-sqlite3を使用
-import * as sqliteVec from "sqlite-vec";
-import type { IEmbeddingModel } from "./embedding";
-
-let Database: any;
-
-if (process.versions.bun) {
-  // Bun の場合
-  const { Database: BunDatabase } = await import("bun:sqlite");
-  Database = BunDatabase;
-} else {
-  // Node.js の場合
-  const BetterSqlite3 = (await import("better-sqlite3")).default;
-  Database = BetterSqlite3;
-}
-
 // ユーザー定義メタデータ型
 export type BaseMetadata = {
   content: string;
@@ -43,22 +27,39 @@ export type SearchResult<T extends BaseMetadata = BaseMetadata> = T & {
   distance: number;
 };
 
+// DBインターフェースの定義
+export interface SQLiteDatabase {
+  exec(sql: string): void;
+  prepare(sql: string): DatabaseStatement;
+  transaction<T>(fn: (batch: any[]) => T): (batch: any[]) => T;
+  close(): void;
+}
+
+export interface DatabaseStatement {
+  run(...params: any[]): { lastInsertRowid?: number };
+  all(...params: any[]): any[];
+}
+
+import type { IEmbeddingModel } from "./embedding";
+
 export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
-  private db: typeof Database;
+  private db: SQLiteDatabase;
   private embeddingDim: number;
   private embeddingModel: IEmbeddingModel;
 
-  constructor(embeddingModel: IEmbeddingModel, options: RAGOptions = {}) {
-    const dbPath = options.dbPath || DEFAULT_DB_PATH;
+  constructor(
+    embeddingModel: IEmbeddingModel,
+    database: SQLiteDatabase,
+    options: RAGOptions = {}
+  ) {
+    this.embeddingModel = embeddingModel;
+    this.db = database;
     this.embeddingDim = options.embeddingDim || DEFAULT_EMBEDDING_DIM;
 
-    this.db = new Database(dbPath);
-    this.embeddingModel = embeddingModel
+    this.initSchema();
+  }
 
-    // load sqlite-vec extension/wrapping (this registers functions / virtual tables)
-    sqliteVec.load(this.db);
-
-    // --- Schema ---
+  private initSchema() {
     this.db.exec(`
     CREATE TABLE IF NOT EXISTS chunks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,14 +70,12 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     );
     `);
 
-    // vec0 virtual table for indexing vectors
     this.db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS vec_index USING vec0(
       embedding float[${this.embeddingDim}] distance_metric=cosine
     );
     `);
 
-    // triggers to keep vec_index in sync with chunks
     this.db.exec(`
     CREATE TRIGGER IF NOT EXISTS chunks_after_insert
     AFTER INSERT ON chunks
