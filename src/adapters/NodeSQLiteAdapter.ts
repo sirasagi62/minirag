@@ -1,6 +1,6 @@
 import type { SQLiteDatabase, DatabaseStatement } from "../db";
-import Database, { DatabaseSync } from "node:sqlite";
-
+import { DatabaseSync } from "node:sqlite";
+import { load } from "sqlite-vec"
 export class NodeSQLiteAdapter implements SQLiteDatabase {
   private db: DatabaseSync;
 
@@ -12,8 +12,7 @@ export class NodeSQLiteAdapter implements SQLiteDatabase {
   }
 
   private loadVecExtension() {
-    const sqliteVec = require("sqlite-vec");
-    sqliteVec.load(this.db);
+    load(this.db);
   }
 
   exec(sql: string): void {

@@ -1,16 +1,17 @@
-import type { SQLiteDatabase, DatabaseStatement } from "../db";
-import Database from "bun:sqlite"
+import { Database } from "bun:sqlite";
+import { load } from "sqlite-vec";
+import type { DatabaseStatement, SQLiteDatabase } from "../db";
 export class BunSQLiteAdapter implements SQLiteDatabase {
   private db: Database;
 
-  constructor(path: string) {
+  constructor(path: string, sqlite3DylibPath?: string) {
+    if (sqlite3DylibPath) Database.setCustomSQLite(sqlite3DylibPath)
     this.db = new Database(path);
     this.loadVecExtension();
   }
 
   private loadVecExtension() {
-    const sqliteVec = require("sqlite-vec");
-    sqliteVec.load(this.db);
+    load(this.db);
   }
 
   exec(sql: string): void {

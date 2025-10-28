@@ -37,7 +37,7 @@ const ragDb = new VeqliteDB(embeddingModel, {
 ### insertChunk()
 
 ```typescript
-insertChunk(chunk: T): Promise<number>
+insertChunk(chunk: T): Promise<void>
 ```
 
 Inserts a single chunk into the database. The method automatically generates the embedding for the chunk content using the provided embedding model.
@@ -47,7 +47,7 @@ Inserts a single chunk into the database. The method automatically generates the
 - `chunk.filepath` (string): Path or identifier for the source
 - Other properties: Additional metadata fields
 
-**Returns:** A Promise that resolves to the ID of the inserted chunk.
+**Returns:** A Promise that resolves when the chunk has been inserted.
 
 **Example:**
 
@@ -59,8 +59,8 @@ const chunk = {
   tags: ["test", "example"]
 };
 
-const id = await ragDb.insertChunk(chunk);
-console.log(`Inserted chunk with ID: ${id}`); // Output: Inserted chunk with ID: 1
+await ragDb.insertChunk(chunk);
+console.log("Chunk inserted successfully");
 ```
 
 ### bulkInsertChunks()
@@ -96,32 +96,28 @@ const chunks = [
 ];
 
 await ragDb.bulkInsertChunks(chunks, 100);
+console.log("All chunks inserted successfully");
 ```
 
 ### searchSimilar()
 
 ```typescript
-searchSimilar(queryEmbedding: Float32Array, k = 5): SearchResult<T>[]
+searchSimilar(query: string, k = 5): Promise<SearchResult<T>[]>
 ```
 
-Finds the k most similar chunks to the query embedding using cosine distance.
+Finds the k most similar chunks to the query text using cosine distance. The method automatically generates the embedding for the query text using the provided embedding model.
 
 **Parameters:**
-- `queryEmbedding` (Float32Array): The query vector for similarity search
+- `query` (string): The query text for similarity search
 - `k` (number, optional): Maximum number of results to return. Defaults to 5.
 
-**Returns:** Array of search results sorted by ascending distance (most similar first).
+**Returns:** A Promise that resolves to an array of search results sorted by ascending distance (most similar first).
 
 **Example:**
 
 ```typescript
-// Create query embedding
-const queryEmbedding = new Float32Array(2);
-queryEmbedding[0] = 1.0;
-queryEmbedding[1] = 0.5;
-
 // Search for similar chunks
-const results = ragDb.searchSimilar(queryEmbedding, 5);
+const results = await ragDb.searchSimilar("What is RAG?", 5);
 
 // Process results
 results.forEach(result => {

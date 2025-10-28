@@ -65,9 +65,9 @@ main().catch(console.error);
 Output:
 ```
 Query: What is RAG?
-RAG stands for Retrieval Augmented Generation: 0.22028076648712158
-Minirag is a simple RAG implementation in TypeScript: 0.23143449425697327
-TypeScript is a typed superset of JavaScript: 0.42197686433792114
+RAG stands for Retrieval Augmented Generation: 0.2203
+Minirag is a simple RAG implementation in TypeScript: 0.2314
+TypeScript is a typed superset of JavaScript: 0.4220
 ```
 
 To run the example:

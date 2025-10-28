@@ -1,7 +1,8 @@
-import type { SQLiteDatabase, DatabaseStatement } from "../db";
 import BetterSqlite3 from "better-sqlite3";
+import { load } from "sqlite-vec";
+import type { DatabaseStatement, SQLiteDatabase } from "../db";
 
-export class NodeSQLiteAdapter implements SQLiteDatabase {
+export class BetterSqlite3Adapter implements SQLiteDatabase {
   private db: BetterSqlite3.Database;
 
   constructor(path: string) {
@@ -10,8 +11,7 @@ export class NodeSQLiteAdapter implements SQLiteDatabase {
   }
 
   private loadVecExtension() {
-    const sqliteVec = require("sqlite-vec");
-    sqliteVec.load(this.db);
+    load(this.db);
   }
 
   exec(sql: string): void {

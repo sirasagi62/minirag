@@ -1,4 +1,5 @@
 import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
+import { BunSQLiteAdapter } from "../src/adapters/BunSQLiteAdapter";
 
 // veqliteの簡単な使用例
 async function main() {
@@ -11,14 +12,15 @@ async function main() {
       "q8"
     );
     console.log("モデルの読み込みが完了しました！\n");
+    // on macOS
+    // c.f. https://bun.com/docs/runtime/sqlite#for-macos-users
+    const bunsqlite = new BunSQLiteAdapter(":memory:","/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib")
 
+    // on other Platforms
+    // const bunsqlite = new BunSQLiteAdapter(":memory:")
     // RAGデータベースインスタンスを作成
     console.log("データベースをセットアップ中...");
-    const rag = new VeqliteDB(embeddingModel, {
-      // メモリ内データベースを使用
-      embeddingDim: 384,
-      dbPath: ":memory:"
-    });
+    const rag = new VeqliteDB(embeddingModel, bunsqlite, {});
     console.log("データベースのセットアップが完了しました！\n");
 
     // ドキュメントを追加
@@ -41,9 +43,9 @@ async function main() {
     const query = "What is RAG?";
     console.log(`クエリ: "${query}"`);
     console.log("類似コンテンツを検索中...\n");
-    
+
     const results = await rag.searchSimilar(query);
-    
+
     console.log("🎉 検索結果:");
     results.forEach((r, i) => {
       console.log(`#${i + 1}: ${r.content}`);

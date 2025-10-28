@@ -54,7 +54,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
   ) {
     this.embeddingModel = embeddingModel;
     this.db = database;
-    this.embeddingDim = options.embeddingDim || DEFAULT_EMBEDDING_DIM;
+    this.embeddingDim = options.embeddingDim || embeddingModel.dim || DEFAULT_EMBEDDING_DIM;
 
     this.initSchema();
   }
