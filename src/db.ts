@@ -18,7 +18,6 @@ export type RAGOptions = {
 };
 
 // デフォルト値
-const DEFAULT_DB_PATH = "chunks.db";
 const DEFAULT_EMBEDDING_DIM = 384;
 
 // 検索結果型（Generics対応）

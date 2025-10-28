@@ -1,30 +1,31 @@
 import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
 import { BunSQLiteAdapter } from "../src/adapters/BunSQLiteAdapter";
 
-// veqliteの簡単な使用例
+// Simple usage example of veqlite
 async function main() {
   try {
-    // 埋め込みモデルを初期化
-    console.log("モデルを読み込み中...");
+    // Initialize the embedding model
+    console.log("Loading model...");
     const embeddingModel = await HFLocalEmbeddingModel.init(
       "sirasagi62/granite-embedding-107m-multilingual-ONNX",
       384,
       "q8"
     );
-    console.log("モデルの読み込みが完了しました！\n");
-    // on macOS
+    console.log("Model loaded successfully!\n");
+
+    // On macOS
     // c.f. https://bun.com/docs/runtime/sqlite#for-macos-users
-    const bunsqlite = new BunSQLiteAdapter(":memory:","/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib")
+    const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib");
 
-    // on other Platforms
-    // const bunsqlite = new BunSQLiteAdapter(":memory:")
-    // RAGデータベースインスタンスを作成
-    console.log("データベースをセットアップ中...");
+    // On other platforms
+    // const bunsqlite = new BunSQLiteAdapter(":memory:");
+    // Create RAG database instance
+    console.log("Setting up database...");
     const rag = new VeqliteDB(embeddingModel, bunsqlite, {});
-    console.log("データベースのセットアップが完了しました！\n");
+    console.log("Database setup completed!\n");
 
-    // ドキュメントを追加
-    console.log("ドキュメントを追加中...");
+    // Add documents
+    console.log("Adding documents...");
     await rag.insertChunk({
       content: "TypeScript is a typed superset of JavaScript",
       filepath: "typescript-intro"
@@ -37,27 +38,27 @@ async function main() {
       content: "Minirag is a simple RAG implementation in TypeScript",
       filepath: "veqlite-intro"
     });
-    console.log("ドキュメントの追加が完了しました！\n");
+    console.log("Documents added successfully!\n");
 
-    // クエリを実行
+    // Execute query
     const query = "What is RAG?";
-    console.log(`クエリ: "${query}"`);
-    console.log("類似コンテンツを検索中...\n");
+    console.log(`Query: "${query}"`);
+    console.log("Searching for similar content...\n");
 
     const results = await rag.searchSimilar(query);
 
-    console.log("🎉 検索結果:");
+    console.log("🎉 Search results:");
     results.forEach((r, i) => {
       console.log(`#${i + 1}: ${r.content}`);
-      console.log(`   類似度スコア: ${r.distance.toFixed(4)}`);
-      console.log(`   ファイル: ${r.filepath}\n`);
+      console.log(`   Similarity score: ${r.distance.toFixed(4)}`);
+      console.log(`   File: ${r.filepath}\n`);
     });
 
-    // データベースを閉じる
+    // Close the database
     rag.close();
-    console.log("データベースを正常に閉じました。");
+    console.log("Database closed successfully.");
   } catch (error) {
-    console.error("エラーが発生しました:", error);
+    console.error("An error occurred:", error);
     process.exit(1);
   }
 }

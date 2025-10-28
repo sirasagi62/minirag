@@ -27,9 +27,13 @@ const embeddingModel = await HFLocalEmbeddingModel.init(
   "q8"
 );
 
+// On macOS with Bun
+const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
+// On other platforms with Bun
+// const bunsqlite = new BunSQLiteAdapter(":memory:");
+
 // Create a RAG database instance
-const ragDb = new VeqliteDB(embeddingModel, {
-  dbPath: ":memory:",
+const ragDb = new VeqliteDB(embeddingModel, bunsqlite, {
   embeddingDim: 384
 });
 ```
@@ -95,6 +99,7 @@ const chunks = [
   }
 ];
 
+// Insert in batches of 100 (default is 500)
 await ragDb.bulkInsertChunks(chunks, 100);
 console.log("All chunks inserted successfully");
 ```
@@ -125,7 +130,7 @@ results.forEach(result => {
   console.log(`Filepath: ${result.filepath}`);
   console.log(`Category: ${result.category}`);
   console.log(`Tags: ${result.tags.join(', ')}`);
-  console.log(`Distance: ${result.distance}`);
+  console.log(`Distance: ${result.distance.toFixed(4)}`);
   console.log('---');
 });
 ```
@@ -141,9 +146,62 @@ Closes the database connection and releases resources.
 **Example:**
 
 ```typescript
-// Always close the database when done
+// Always close the database when done to release resources
 ragDb.close();
 ```
+
+## Adapter Implementations
+
+VeqliteDB supports multiple SQLite adapter implementations depending on your runtime environment:
+
+### BunSQLiteAdapter (Bun runtime)
+
+```typescript
+import { BunSQLiteAdapter } from "veqlite/adapters/BunSQLiteAdapter";
+
+const adapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib"); // macOS
+// const adapter = new BunSQLiteAdapter(":memory:"); // Other platforms
+```
+
+- Use with Bun runtime
+- On macOS, you may need to specify the path to `libsqlite3.dylib` for sqlite-vec extension
+- Best performance when using Bun
+
+### NodeSQLiteAdapter (Node.js runtime)
+
+```typescript
+import { NodeSQLiteAdapter } from "veqlite/adapters/NodeSQLiteAdapter";
+
+const adapter = new NodeSQLiteAdapter("chunks.db");
+```
+
+- Use with Node.js
+- Built on `node:sqlite` (built-in module)
+- Supports sqlite-vec via extension loading
+- This adapter works on Node v24 or later
+
+### BetterSqlite3Adapter (Node.js runtime)
+
+```typescript
+import { BetterSqlite3Adapter } from "veqlite/adapters/BetterSqlite3SQLiteAdapter";
+
+const adapter = new BetterSqlite3Adapter("chunks.db");
+```
+
+- Use with Node.js
+- Built on `better-sqlite3` (native module)
+- High performance for bulk operations
+- Supports sqlite-vec via extension loading
+
+### Adapter Selection Guide
+
+| Runtime | Recommended Adapter | Notes |
+|--------|---------------------|------|
+| Bun | `BunSQLiteAdapter` | Requires custom SQLite dylib on macOS |
+| Node.js | `NodeSQLiteAdapter` | Built-in SQLite, easier setup |
+| Node.js (high perf) | `BetterSqlite3Adapter` | Native bindings, faster bulk inserts |
+
+All adapters implement the `SQLiteDatabase` interface, making them interchangeable.
 
 ## Type Definitions
 
