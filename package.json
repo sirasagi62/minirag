@@ -1,6 +1,6 @@
 {
   "name": "veqlite",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A ready-to-use vector database/RAG TypeScript library implemented with SQLite and @huggingface/transformers.",
   "keywords": [
     "Typescript",
@@ -32,16 +32,16 @@
       "types": "./dist/index.d.ts"
     },
     "./node": {
-      "import":"./dist/adapters/NodeSQLiteAdapter.js",
-      "types":"./dist/adapters/NodeSQLiteAdapter.d.ts"
+      "import": "./dist/adapters/NodeSQLiteAdapter.js",
+      "types": "./dist/adapters/NodeSQLiteAdapter.d.ts"
     },
     "./bun": {
-      "import":"./dist/adapters/BunSQLiteAdapter.js",
-      "types":"./dist/adapters/BunSQLiteAdapter.d.ts"
+      "import": "./dist/adapters/BunSQLiteAdapter.js",
+      "types": "./dist/adapters/BunSQLiteAdapter.d.ts"
     },
     "./better-sqlite3": {
-      "import":"./dist/adapters/BetterSqlite3SQLiteAdapter.js",
-      "types":"./dist/adapters/BetterSqlite3SQLiteAdapter.d.ts"
+      "import": "./dist/adapters/BetterSqlite3SQLiteAdapter.js",
+      "types": "./dist/adapters/BetterSqlite3SQLiteAdapter.d.ts"
     }
   },
   "peerDependencies": {
