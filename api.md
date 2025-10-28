@@ -157,7 +157,7 @@ VeqliteDB supports multiple SQLite adapter implementations depending on your run
 ### BunSQLiteAdapter (Bun runtime)
 
 ```typescript
-import { BunSQLiteAdapter } from "veqlite/adapters/BunSQLiteAdapter";
+import { BunSQLiteAdapter } from "veqlite/bun";
 
 const adapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib"); // macOS
 // const adapter = new BunSQLiteAdapter(":memory:"); // Other platforms
@@ -170,7 +170,7 @@ const adapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.d
 ### NodeSQLiteAdapter (Node.js runtime)
 
 ```typescript
-import { NodeSQLiteAdapter } from "veqlite/adapters/NodeSQLiteAdapter";
+import { NodeSQLiteAdapter } from "veqlite/node";
 
 const adapter = new NodeSQLiteAdapter("chunks.db");
 ```
@@ -183,7 +183,7 @@ const adapter = new NodeSQLiteAdapter("chunks.db");
 ### BetterSqlite3Adapter (Node.js runtime)
 
 ```typescript
-import { BetterSqlite3Adapter } from "veqlite/adapters/BetterSqlite3SQLiteAdapter";
+import { BetterSqlite3Adapter } from "veqlite/better-sqlite3";
 
 const adapter = new BetterSqlite3Adapter("chunks.db");
 ```

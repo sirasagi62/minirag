@@ -1,32 +1,32 @@
 // db.ts
-// ユーザー定義メタデータ型
+// User-defined metadata type
 export type BaseMetadata = {
   content: string;
   filepath: string;
   id?: number;
 };
 
-// チャンクデータ型（メタデータ拡張可能）
+// Chunk data type (metadata can be extended)
 export type ChunkRow<T extends BaseMetadata = BaseMetadata> = T & {
   embedding: Float32Array;
 };
 
-// 初期化オプション
+// Initialization options
 export type RAGOptions = {
   dbPath?: string;
   embeddingDim?: number;
 };
 
-// デフォルト値
+// default value
 const DEFAULT_EMBEDDING_DIM = 384;
 
-// 検索結果型（Generics対応）
+// Search result type (supports generics)
 export type SearchResult<T extends BaseMetadata = BaseMetadata> = T & {
   id: number;
   distance: number;
 };
 
-// DBインターフェースの定義
+// Abstract DB definition
 export interface SQLiteDatabase {
   exec(sql: string): void;
   prepare(sql: string): DatabaseStatement;
@@ -111,7 +111,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
   }
 
-  // チャンク挿入関数（Generics対応）
+  // Insert chunk with embedding (supports generics)
   insertChunkWithEmbedding(chunk: ChunkRow<T>): void {
     this.assertEmbeddingDim(chunk.embedding);
     const buf = this.float32ToBuffer(chunk.embedding);
@@ -127,7 +127,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     stmt.run(content, filepath, metadataStr, buf);
   }
 
-  // バルク挿入関数（Generics対応）
+  // Bulk insert function (supports generics)
   bulkInsertChunksWithEmbdding(chunks: ChunkRow<T>[], batchSize = 500) {
     // chunked batch insert to avoid giant single statement / memory spikes
     const insertOne = this.db.prepare(
@@ -139,7 +139,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
         this.assertEmbeddingDim(c.embedding);
         const buf = this.float32ToBuffer(c.embedding);
 
-        // メタデータをJSON文字列に変換
+        // convert metadata into JSON
         const { content, filepath, id, ...metadata } = c;
         const metadataStr = JSON.stringify(metadata);
 
@@ -153,7 +153,7 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     }
   }
 
-  // 類似チャンク検索関数（Generics対応）
+  // Search similar chunks by embedding (supports generics)
   searchSimilarByEmbedding(queryEmbedding: Float32Array, k = 5): SearchResult<T>[] {
     this.assertEmbeddingDim(queryEmbedding);
     const qBuf = this.float32ToBuffer(queryEmbedding);

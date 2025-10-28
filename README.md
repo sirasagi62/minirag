@@ -2,21 +2,24 @@
 
 A simple vector database library written in TypeScript using SQLite with the sqlite-vec extension.
 
-Features:
+## Features
 - Store text chunks with metadata and embeddings
 - High-level integration with @huggingface/transformers
 - Fast similarity search using cosine distance
 - Support for custom metadata types
 - Bulk insertion for improved performance
 - In-memory or persistent database options
-
+- Multiple runtime support (Bun, Node.js)
 
 For more details about the project structure and API, see [overview.md](./overview.md) and [api.md](./api.md).
 
-# example
+## Usage Example
+
 ```typescript
 import { VeqliteDB, HFLocalEmbeddingModel } from "veqlite";
-
+import { BunSQLiteAdapter } from "veqlite/bun";
+//import { NodeSQLiteAdapter } from "veqlite/node"
+//import { BetterSqlite3Adapter } from "veqlite/better-sqlite3"
 // Simple example of using veqlite
 async function main() {
   // Initialize the embedding model
@@ -26,11 +29,14 @@ async function main() {
     "q8"
   );
 
+  // On macOS with Bun (requires custom SQLite dylib)
+  const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
+  // On other platforms with Bun
+  // const bunsqlite = new BunSQLiteAdapter(":memory:");
+
   // Create RAG database instance
-  const rag = new VeqliteDB(embeddingModel, {
-    // Use in-memory database
-    embeddingDim: 384,
-    dbPath: ":memory:"
+  const rag = new VeqliteDB(embeddingModel, bunsqlite, {
+    embeddingDim: 384
   });
 
   // Add some documents
@@ -47,13 +53,13 @@ async function main() {
     filepath: "veqlite-intro"
   });
 
-  const query = "What is RAG?"
-  console.log(`Query: ${query}`)
+  const query = "What is RAG?";
+  console.log(`Query: ${query}`);
   // Query the system
   const results = await rag.searchSimilar(query);
   results.forEach(r => {
-    console.log(`${r.content}: ${r.distance}`)
-  })
+    console.log(`${r.content}: ${r.distance.toFixed(4)}`);
+  });
 
   // Close the database
   rag.close();
@@ -62,7 +68,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-Output:
+### Output
 ```
 Query: What is RAG?
 RAG stands for Retrieval Augmented Generation: 0.2203
@@ -70,31 +76,70 @@ Minirag is a simple RAG implementation in TypeScript: 0.2314
 TypeScript is a typed superset of JavaScript: 0.4220
 ```
 
-To run the example:
-
+### Run the example
 ```bash
 bun run examples/simple.ts
 ```
 
-# install
+## Adapter Selection Guide
 
-You can use the library on Node.js/bun.
+VeqliteDB supports multiple SQLite adapter implementations depending on your runtime environment:
+
+| Runtime | Adapter | Installation | Notes |
+|--------|--------|-------------|-------|
+| Bun | `BunSQLiteAdapter` | Built-in | On macOS, specify path to `libsqlite3.dylib` |
+| Node.js | `NodeSQLiteAdapter` | Built-in | Requires Node v24+ |
+| Node.js (high performance) | `BetterSqlite3Adapter` | `npm install better-sqlite3` | Native bindings, faster bulk operations |
+
+### Example Adapter Usage
+
+**BunSQLiteAdapter (Bun runtime)**
+```typescript
+import { BunSQLiteAdapter } from "veqlite/bun";
+
+// On macOS
+const adapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
+// On other platforms
+const adapter = new BunSQLiteAdapter(":memory:");
+```
+
+**NodeSQLiteAdapter (Node.js runtime)**
+```typescript
+import { NodeSQLiteAdapter } from "veqlite/node";
+
+const adapter = new NodeSQLiteAdapter("chunks.db");
+```
+
+**BetterSqlite3Adapter (Node.js runtime)**
+```typescript
+import { BetterSqlite3Adapter } from "veqlite/better-sqlite3";
+
+const adapter = new BetterSqlite3Adapter("chunks.db");
+```
+
+## Installation
 
 ```bash
+# For Bun or Node.js with built-in SQLite
 npm install veqlite
 
-pnpm install veqlite
-
-bun add veqlite
+# For Node.js with better-sqlite3 (recommended for high performance)
+npm install veqlite better-sqlite3
 ```
 
-# development
+## Development
+
 We use `bun` to develop the library.
 
-To install dependencies:
-
 ```bash
+# Install dependencies
 bun install
+
+# Run tests
+bun test
+
+# Build the library
+bun run build
 ```
 
-This project was created using `bun init` in bun v1.2.21. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+This project was created using `bun init`. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
