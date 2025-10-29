@@ -2,19 +2,22 @@
 
 ## VeqliteDB<T>
 
-A minimal vector database implementation using SQLite with the sqlite-vec extension.
+A minimal vector database implementation supporting both SQLite and PostgreSQL with vector extensions.
+
+**Type Parameters:**
+- `T extends BaseMetadata`: The type of metadata associated with chunks. Allows for custom metadata fields beyond the base properties.
 
 ### Constructor
 
 ```typescript
-constructor(embeddingModel: IEmbeddingModel, options: RAGOptions = {})
+constructor(embeddingModel: IEmbeddingModel, driver: IDatabaseDriver, options: RAGOptions = {})
 ```
 
 Initializes a new vector database instance.
 
 **Parameters:**
 - `embeddingModel`: An instance of an embedding model that implements the IEmbeddingModel interface
-- `options.dbPath` (string, optional): Path to the SQLite database file. Defaults to "chunks.db". Use ":memory:" for in-memory database.
+- `driver`: A database driver instance implementing IDatabaseDriver interface
 - `options.embeddingDim` (number, optional): Dimension of the embeddings. Defaults to 384.
 
 **Example:**
@@ -27,15 +30,18 @@ const embeddingModel = await HFLocalEmbeddingModel.init(
   "q8"
 );
 
-// On macOS with Bun
-const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
-// On other platforms with Bun
-// const bunsqlite = new BunSQLiteAdapter(":memory:");
-
-// Create a RAG database instance
-const ragDb = new VeqliteDB(embeddingModel, bunsqlite, {
+// Using PGLite (PostgreSQL with pgvector)
+const pgDriver = new PGLiteAdapter(":memory:");
+const ragDb = await VeqliteDB.init(embeddingModel, pgDriver, {
   embeddingDim: 384
 });
+
+// Using Bun with SQLite
+// const sqliteDriver = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib"); // macOS
+// const sqliteDriver = new BunSQLiteAdapter(":memory:"); // Other platforms
+// const ragDb = await VeqliteDB.init(embeddingModel, sqliteDriver, {
+//   embeddingDim: 384
+// });
 ```
 
 ### insertChunk()
@@ -138,21 +144,36 @@ results.forEach(result => {
 ### close()
 
 ```typescript
-close()
+close(): Promise<void>
 ```
 
-Closes the database connection and releases resources.
+Closes the database connection and releases resources. Returns a Promise that resolves when the database is fully closed.
 
 **Example:**
 
 ```typescript
 // Always close the database when done to release resources
-ragDb.close();
+await ragDb.close();
+console.log("Database closed successfully");
 ```
 
 ## Adapter Implementations
 
-VeqliteDB supports multiple SQLite adapter implementations depending on your runtime environment:
+VeqliteDB supports multiple database adapter implementations depending on your runtime environment and database preference:
+
+### PGLiteAdapter (PostgreSQL with pgvector)
+
+```typescript
+import { PGLiteAdapter } from "veqlite/pglite";
+
+const adapter = new PGLiteAdapter(":memory:");
+```
+
+- Use with Bun or Node.js runtime
+- Based on PostgreSQL with pgvector extension
+- Ideal for applications requiring PostgreSQL compatibility
+- Supports advanced vector operations through pgvector
+- Uses in-memory database when path is ":memory:"
 
 ### BunSQLiteAdapter (Bun runtime)
 
@@ -197,7 +218,8 @@ const adapter = new BetterSqlite3Adapter("chunks.db");
 
 | Runtime | Recommended Adapter | Notes |
 |--------|---------------------|------|
-| Bun | `BunSQLiteAdapter` | Requires custom SQLite dylib on macOS |
+| Bun | `PGLiteAdapter` | PostgreSQL compatibility, no custom dylib needed |
+| Bun (SQLite) | `BunSQLiteAdapter` | Requires custom SQLite dylib on macOS |
 | Node.js | `NodeSQLiteAdapter` | Built-in SQLite, easier setup |
 | Node.js (high perf) | `BetterSqlite3Adapter` | Native bindings, faster bulk inserts |
 

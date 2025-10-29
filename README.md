@@ -30,12 +30,13 @@ async function main() {
   );
 
   // On macOS with Bun (requires custom SQLite dylib)
-  const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
+  // const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/lib/libsqlite3.dylib");
   // On other platforms with Bun
   // const bunsqlite = new BunSQLiteAdapter(":memory:");
-
+  // With PGLite (PostgreSQL with pgvector)
+  const dbAdapter = new PGLiteAdapter(":memory:");
   // Create RAG database instance
-  const rag = new VeqliteDB(embeddingModel, bunsqlite, {
+  const rag = await VeqliteDB.init(embeddingModel, bunsqlite, {
     embeddingDim: 384
   });
 
@@ -49,7 +50,7 @@ async function main() {
     filepath: "rag-intro"
   });
   await rag.insertChunk({
-    content: "Minirag is a simple RAG implementation in TypeScript",
+    content: "Veqlite is a simple RAG implementation in TypeScript",
     filepath: "veqlite-intro"
   });
 
@@ -57,8 +58,12 @@ async function main() {
   console.log(`Query: ${query}`);
   // Query the system
   const results = await rag.searchSimilar(query);
-  results.forEach(r => {
-    console.log(`${r.content}: ${r.distance.toFixed(4)}`);
+
+  console.log("🎉 Search results:");
+  results.forEach((r, i) => {
+    console.log(`#${i + 1}: ${r.content}`);
+    console.log(`   Similarity score: ${r.distance.toFixed(4)}`);
+    console.log(`   File: ${r.filepath}\n`);
   });
 
   // Close the database
@@ -70,10 +75,21 @@ main().catch(console.error);
 
 ### Output
 ```
-Query: What is RAG?
-RAG stands for Retrieval Augmented Generation: 0.2203
-Minirag is a simple RAG implementation in TypeScript: 0.2314
-TypeScript is a typed superset of JavaScript: 0.4220
+Query: "What is RAG?"
+Searching for similar content...
+
+🎉 Search results:
+#1: RAG stands for Retrieval Augmented Generation
+   Similarity score: 0.2203
+   File: rag-intro
+
+#2: Veqlite is a simple RAG implementation in TypeScript
+   Similarity score: 0.3020
+   File: veqlite-intro
+
+#3: TypeScript is a typed superset of JavaScript
+   Similarity score: 0.4220
+   File: typescript-intro
 ```
 
 ### Run the example

@@ -14,15 +14,20 @@ This implementation leverages SQLite's virtual table extensions through sqlite-v
 
 ## Project Structure
 
-veqlite follows a simple and focused architecture:
+veqlite follows a modular and extensible architecture that supports multiple database backends:
 
-- **Core Database**: Built on Bun's native SQLite support with sqlite-vec extension for vector operations
-- **Schema Design**: Uses two main components - a regular table for storing chunk data and a virtual table for vector indexing
-- **Data Flow**: Text chunks with embeddings are inserted into the chunks table, with triggers automatically synchronizing the vector index
-- **Search Mechanism**: Utilizes SQLite's MATCH operator with the vec_index virtual table to perform KNN (k-nearest neighbors) searches
+- **Multi-Database Support**: Unified interface for both SQLite (with sqlite-vec) and PostgreSQL (with pgvector via PGLite)
+- **Database Abstraction**: Uses `IDatabaseDriver` interface to abstract database operations, enabling seamless switching between SQLite and PGLite
+- **Vector Engine Strategy**: Implements separate vector engines (`SQLiteVectorEngine` and `PGLiteVectorEngine`) that adapt to the underlying database system
+- **Schema Design**:
+  - For SQLite: Uses a regular table with triggers synchronizing to a virtual table (vec0) for vector operations
+  - For PGLite: Uses a regular table with pgvector extension and HNSW index for efficient similarity search
+- **Data Flow**: Text chunks with embeddings are inserted through the vector engine, which handles database-specific storage details
+- **Search Mechanism**:
+  - SQLite: Uses MATCH operator with vec_index virtual table for KNN search
+  - PGLite: Uses cosine distance operator (<=>) with HNSW index for efficient similarity search
 
-The design prioritizes simplicity and performance, avoiding unnecessary abstractions while providing essential RAG functionality. The use of generics allows for type-safe extension of metadata while maintaining flexibility.
-
+The design prioritizes flexibility and performance across different database systems while maintaining a consistent API. The use of generics enables type-safe extension of metadata, and the driver-based architecture allows for easy integration with different runtimes and database preferences.
 ## Dependencies
 
 ### Runtime Dependencies
@@ -44,27 +49,41 @@ The dependency list is intentionally minimal, focusing on essential components f
 
 ```
 veqlite/
-├── src/                     # Source
-│   ├── db.ts                # Core RAG database implementation
-│   ├── embedding.ts         # Embedding generation and management
-│   └── index.ts             # index.ts
-├── tests/                   # Test suite
-│   └── rag.test.ts          # Unit tests for RAG functionality
-├── api.md                   # API documentation
-├── overview.md              # Project overview (this file)
-├── README.md                # Project quick start guide
-├── package.json             # Project metadata and dependencies
-├── bun.lock                 # Bun lockfile
-├── tsconfig.json            # TypeScript configuration
-└── tsup.config.ts           # Build configuration for tsup
+├── examples
+│  └── simple.ts
+├── overview.md
+├── package.json
+├── README.md
+├── src
+│  ├── db.ts
+│  ├── drivers
+│  │  ├── BetterSqlite3SQLiteDriver.ts
+│  │  ├── BunSQLiteDriver.ts
+│  │  ├── NodeSQLiteDriver.ts
+│  │  └── PGLiteDriver.ts
+│  ├── embedding.ts
+│  ├── engines
+│  │  ├── PGLiteVectorEngine.ts
+│  │  └── SQLiteVectorEngine.ts
+│  ├── index.ts
+│  └── types.ts
+├── tests
+│  └── rag.test.ts
+├── tsconfig.json
+└── tsup.config.ts
 ```
 
 ### Key Files
 
-- **src/db.ts**: Contains the main `VeqliteDB` class implementation with all core functionality including chunk insertion, bulk insertion, and similarity search.
-- **src/embedding.ts**: Handles embedding generation and management, providing utilities for text vectorization.
+- **src/db.ts**: Contains the main `VeqliteDB` class that orchestrates the embedding model, database driver, and vector engine. Implements the high-level API for chunk
+operations and similarity search.
+- **src/embedding.ts**: Handles embedding generation and management, providing utilities for text vectorization with Hugging Face models.
+- **src/drivers/**: Contains database driver implementations (`BunSQLiteAdapter`, `NodeSQLiteAdapter`, `BetterSqlite3Adapter`, `PGLiteAdapter`) that implement the
+`IDatabaseDriver` interface for different runtimes and database systems.
+- **src/engines/**: Contains vector database engines (`SQLiteVectorEngine`, `PGLiteVectorEngine`) that implement database-specific schema initialization and operations for
+vector similarity search.
 - **tests/rag.test.ts**: Comprehensive tests verifying database initialization, chunk insertion, search functionality, and bulk operations.
 - **api.md**: Detailed documentation of the public API with usage examples.
-- **README.md**: Quick start guide with installation and basic usage instructions.
+- **README.md**: Quick start guide with installation and basic usage instructions, including adapter selection guide for different runtimes.
 - **package.json**: Defines project dependencies and metadata.
 - **tsup.config.ts**: Configuration for building/distributing the package if needed.
