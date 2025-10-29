@@ -64,6 +64,7 @@
     "ts-node": "^10.9.2"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "prepare": "tsup"
   }
 }
