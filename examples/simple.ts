@@ -9,19 +9,23 @@ async function main() {
     console.log("Loading model...");
     const embeddingModel = await HFLocalEmbeddingModel.init(
       "sirasagi62/granite-embedding-107m-multilingual-ONNX",
+      //"sirasagi62/ruri-v3-70m-ONNX",
       384,
       "q8"
     );
     console.log("Model loaded successfully!\n");
+    console.log("Model Name: ",embeddingModel.modelname)
+    console.log("Embedding Dimension: ",embeddingModel.dim)
 
     // On macOS
     // c.f. https://bun.com/docs/runtime/sqlite#for-macos-users
-    // const dbAdapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib");
+    //const dbAdapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib");
     const dbAdapter = new PGLiteAdapter(":memory:")
     // On other platforms
     // const bunsqlite = new BunSQLiteAdapter(":memory:");
     // Create RAG database instance
     console.log("Setting up database...");
+    console.log("Backend Type:",dbAdapter.type)
     const rag = new VeqliteDB(embeddingModel, dbAdapter, {});
     await rag.initSchema()
     console.log("Database setup completed!\n");

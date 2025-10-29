@@ -73,8 +73,11 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
       );
       `);
       await this.db.exec(`
-      CREATE INDEX IF NOT EXISTS chunks_embedding_idx ON chunks USING ivfflat (embedding vector_cosine_ops);
+      CREATE INDEX IF NOT EXISTS chunks_embedding_idx ON chunks USING hnsw (embedding vector_cosine_ops);
       `);
+      // await this.db.exec(`
+      // CREATE INDEX IF NOT EXISTS chunks_embedding_idx ON chunks USING ivfflat (embedding vector_cosine_ops);
+      // `);
     } else {
       await this.db.exec(`
       CREATE TABLE IF NOT EXISTS chunks (
@@ -114,6 +117,15 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
       `);
     }
   }
+  static async init(
+    embeddingModel: IEmbeddingModel,
+    database: ISQLDatabse,
+    options: RAGOptions = {}
+  ){
+    const _this = new VeqliteDB(embeddingModel,database,options)
+    await _this.initSchema()
+    return _this
+  }
 
   // --- Helpers ---
   private assertEmbeddingDim(arr: Float32Array) {
@@ -127,43 +139,67 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     return Buffer.from(arr.buffer, arr.byteOffset, arr.byteLength);
   }
 
-  private float32ToNumberArray(arr: Float32Array): number[] {
-    return Array.from(arr);
+  private float32ToNumberArrayStr(arr: Float32Array): string {
+    return `[${Array.from(arr)}]`;
   }
 
 
   // Insert chunk with embedding (supports generics)
   async insertChunkWithEmbedding(chunk: ChunkRow<T>): Promise<void> {
     this.assertEmbeddingDim(chunk.embedding);
-    const buf = this.float32ToBuffer(chunk.embedding);
-
     const { content, filepath, id, ...metadata } = chunk;
     const metadataStr = JSON.stringify(metadata);
-
-    const stmt = await this.db.prepare(
-      `INSERT INTO chunks (content, filepath, metadata, embedding)
+    if (this.db.type === "pglite") {
+      const buf = this.float32ToNumberArrayStr(chunk.embedding);
+      const stmt = await this.db.prepare(
+        `INSERT INTO chunks (content, filepath, metadata, embedding)
        VALUES ($1, $2, $3, $4)`
-    );
-    await stmt.run(content, filepath, metadataStr, buf);
+      );
+      await stmt.run(content, filepath, metadataStr, buf);
+
+    } else {
+      const buf = this.float32ToBuffer(chunk.embedding);
+      const stmt = await this.db.prepare(
+        `INSERT INTO chunks (content, filepath, metadata, embedding)
+       VALUES ($1, $2, $3, $4)`
+      );
+      await stmt.run(content, filepath, metadataStr, buf);
+    }
   }
 
   // Bulk insert function (supports generics)
   async bulkInsertChunksWithEmbdding(chunks: ChunkRow<T>[], batchSize = 500): Promise<void> {
-    const insertMany = this.db.transaction(async (batch: ChunkRow<T>[]) => {
-      const stmt = await this.db.prepare(
-        `INSERT INTO chunks (content, filepath, metadata, embedding)
+    const insertMany = this.db.type === "pglite"
+      ? this.db.transaction(async (batch: ChunkRow<T>[]) => {
+        const stmt = await this.db.prepare(
+          `INSERT INTO chunks (content, filepath, metadata, embedding)
          VALUES ($1, $2, $3, $4)`
-      );
-      for (const c of batch) {
-        this.assertEmbeddingDim(c.embedding);
-        const buf = this.float32ToBuffer(c.embedding);
+        );
+        for (const c of batch) {
+          this.assertEmbeddingDim(c.embedding);
+          const buf = this.float32ToNumberArrayStr(c.embedding);
 
-        const { content, filepath, id, ...metadata } = c;
-        const metadataStr = JSON.stringify(metadata);
+          const { content, filepath, id, ...metadata } = c;
+          const metadataStr = JSON.stringify(metadata);
 
-        await stmt.run(content, filepath, metadataStr, buf);
-      }
-    });
+          await stmt.run(content, filepath, metadataStr, buf);
+        }
+      })
+      : this.db.transaction(async (batch: ChunkRow<T>[]) => {
+        const stmt = await this.db.prepare(
+          `INSERT INTO chunks (content, filepath, metadata, embedding)
+         VALUES ($1, $2, $3, $4)`
+        );
+        for (const c of batch) {
+          this.assertEmbeddingDim(c.embedding);
+          const buf = this.float32ToBuffer(c.embedding);
+
+          const { content, filepath, id, ...metadata } = c;
+          const metadataStr = JSON.stringify(metadata);
+
+          await stmt.run(content, filepath, metadataStr, buf);
+        }
+      });
 
     for (let i = 0; i < chunks.length; i += batchSize) {
       const slice = chunks.slice(i, i + batchSize);
@@ -173,12 +209,10 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
 
   // Search similar chunks by embedding (supports generics)
   async searchSimilarByEmbedding(queryEmbedding: Float32Array, k = 5): Promise<SearchResult<T>[]> {
-    this.assertEmbeddingDim(queryEmbedding);
-    const qBuf = this.float32ToBuffer(queryEmbedding);
-
-    let sql: string;
     if (this.db.type === "pglite") {
-      sql = `
+      this.assertEmbeddingDim(queryEmbedding);
+      const qBuf = this.float32ToNumberArrayStr(queryEmbedding);
+      const stmt = await this.db.prepare(`
         SELECT
           id,
           content,
@@ -187,10 +221,25 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
           embedding <=> $1 AS distance
         FROM chunks
         ORDER BY distance
-        LIMIT $2
-      `;
+        LIMIT $2`);
+      const rows = await stmt.all(
+        qBuf, k
+      );
+      return rows.map(r => {
+        const metadata = r.metadata ? r.metadata : {};
+        return {
+          ...metadata,
+          id: Number(r.id),
+          content: r.content,
+          filepath: r.filepath,
+          distance: Number(r.distance)
+        } as SearchResult<T>;
+      });
+
     } else {
-      sql = `
+      const qBuf = this.float32ToBuffer(queryEmbedding);
+
+      const sql = `
         WITH q AS (SELECT ? AS embedding)
         SELECT
           c.id,
@@ -206,22 +255,23 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
         ORDER BY distance
         LIMIT ?
       `;
-    }
 
-    const stmt = await this.db.prepare(sql);
-    const rows = await stmt.all(
-      this.db.type === "pglite" ? [qBuf, k] : [qBuf, k, k]
-    );
-    return rows.map(r => {
-      const metadata = r.metadata ? (this.db.type === "pglite" ? r.metadata : JSON.parse(r.metadata)) : {};
-      return {
-        ...metadata,
-        id: Number(r.id),
-        content: r.content,
-        filepath: r.filepath,
-        distance: Number(r.distance)
-      } as SearchResult<T>;
-    });
+      const stmt = await this.db.prepare(sql);
+      const rows = await stmt.all(
+        [qBuf, k, k]
+      );
+      return rows.map(r => {
+        const metadata = r.metadata ? JSON.parse(r.metadata) : {};
+        return {
+          ...metadata,
+          id: Number(r.id),
+          content: r.content,
+          filepath: r.filepath,
+          distance: Number(r.distance)
+        } as SearchResult<T>;
+      });
+
+    }
   }
 
   async insertChunk(inputChunk: T): Promise<void> {

@@ -42,6 +42,10 @@
     "./better-sqlite3": {
       "import": "./dist/adapters/BetterSqlite3SQLiteAdapter.js",
       "types": "./dist/adapters/BetterSqlite3SQLiteAdapter.d.ts"
+    },
+    "./pglite": {
+      "import": "./dist/adapters/PGLiteAdapter.js",
+      "types": "./dist/adapters/PGLiteAdapter.d.ts"
     }
   },
   "peerDependencies": {
