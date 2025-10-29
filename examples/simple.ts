@@ -1,6 +1,8 @@
 import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
-import { BunSQLiteAdapter } from "../src/adapters/BunSQLiteAdapter";
 import { PGLiteAdapter } from "../src/adapters/PGLiteAdapter";
+// Since it's being read from within the module, a relative path is used
+// If you installed veqlite via npm, use the Adapter as follows:
+// import { PGLiteAdapter } from "veqlite/pglite";
 
 // Simple usage example of veqlite
 async function main() {
@@ -9,7 +11,6 @@ async function main() {
     console.log("Loading model...");
     const embeddingModel = await HFLocalEmbeddingModel.init(
       "sirasagi62/granite-embedding-107m-multilingual-ONNX",
-      //"sirasagi62/ruri-v3-70m-ONNX",
       384,
       "q8"
     );
