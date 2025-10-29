@@ -1,5 +1,6 @@
 import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
 import { BunSQLiteAdapter } from "../src/adapters/BunSQLiteAdapter";
+import { PGLiteAdapter } from "../src/adapters/PGLiteAdapter";
 
 // Simple usage example of veqlite
 async function main() {
@@ -15,13 +16,14 @@ async function main() {
 
     // On macOS
     // c.f. https://bun.com/docs/runtime/sqlite#for-macos-users
-    const bunsqlite = new BunSQLiteAdapter(":memory:", "/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib");
-
+    // const dbAdapter = new BunSQLiteAdapter(":memory:", "/opt/homebrew/Cellar/sqlite/3.50.4/lib/libsqlite3.dylib");
+    const dbAdapter = new PGLiteAdapter(":memory:")
     // On other platforms
     // const bunsqlite = new BunSQLiteAdapter(":memory:");
     // Create RAG database instance
     console.log("Setting up database...");
-    const rag = new VeqliteDB(embeddingModel, bunsqlite, {});
+    const rag = new VeqliteDB(embeddingModel, dbAdapter, {});
+    await rag.initSchema()
     console.log("Database setup completed!\n");
 
     // Add documents

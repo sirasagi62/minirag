@@ -53,6 +53,7 @@
     "tsup": "^8.5.0"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.11",
     "@huggingface/transformers": "^3.7.3",
     "better-sqlite3": "^12.4.1",
     "sqlite-vec": "^0.1.7-alpha.2",

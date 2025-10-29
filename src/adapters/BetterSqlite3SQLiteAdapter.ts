@@ -1,9 +1,10 @@
 import BetterSqlite3 from "better-sqlite3";
 import { load } from "sqlite-vec";
-import type { DatabaseStatement, SQLiteDatabase } from "../db";
+import type { DatabaseStatement, ISQLDatabse } from "../db";
 
-export class BetterSqlite3Adapter implements SQLiteDatabase {
+export class BetterSqlite3Adapter implements ISQLDatabse {
   private db: BetterSqlite3.Database;
+  readonly type = "sqlite";
 
   constructor(path: string) {
     this.db = new BetterSqlite3(path);
@@ -14,24 +15,36 @@ export class BetterSqlite3Adapter implements SQLiteDatabase {
     load(this.db);
   }
 
-  exec(sql: string): void {
+  async exec(sql: string) {
     this.db.exec(sql);
   }
 
-  prepare(sql: string): DatabaseStatement {
+  async prepare(sql: string): Promise<DatabaseStatement> {
     const stmt = this.db.prepare(sql);
     return {
-      run: (...args) => stmt.run(...args),
-      all: (...args) => stmt.all(...args),
+      run: async (...args) => { stmt.run(...args) },
+      all: async (...args) => stmt.all(...args),
     };
   }
 
-  transaction(fn: (batch: any[]) => void): (batch: any[]) => void {
-    const tx = this.db.transaction(fn);
+
+
+  // transaction (fn: (batch: any[]) => void): (batch: any[]) => void {
+  //   const tx = this.db.transaction(fn);
+  //   return tx;
+  // }
+
+  transaction(fn: (batch: any[]) => Promise<void>): (batch: any[]) => Promise<void> {
+    const tx = async (_batch: any[]) => {
+      this.db.exec("BEGIN")
+      await fn(_batch)
+      this.db.exec("END")
+    }
     return tx;
+
   }
 
-  close(): void {
+  async close() {
     this.db.close();
   }
 }
