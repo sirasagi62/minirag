@@ -1,6 +1,6 @@
 {
   "name": "veqlite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A ready-to-use vector database/RAG TypeScript library implemented with SQLite and @huggingface/transformers.",
   "keywords": [
     "Typescript",
