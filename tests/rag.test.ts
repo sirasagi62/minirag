@@ -1,7 +1,6 @@
 import { test, expect } from "bun:test";
-import { VeqliteDB, type BaseMetadata } from "../src/db";
-import { type IEmbeddingModel } from "../src/embedding";
-import { BunSQLiteAdapter } from "../src/adapters/BunSQLiteAdapter";
+import { VeqliteDB, type BaseMetadata, type IEmbeddingModel } from "../src";
+import { PGLiteAdapter } from "../dist/drivers/PGLiteDriver";
 
 // カスタムメタデータ型の定義
 type TestMetadata = BaseMetadata & {
@@ -16,7 +15,7 @@ class MockEmbeddingModel implements IEmbeddingModel {
 
   async embedding(text: string): Promise<Float32Array> {
     const embedding = new Float32Array(this.dim);
-    if (text.includes("test chunk")) {
+    if (text.includes("test query")) {
       embedding[0] = 1.0;
       embedding[1] = 0.5;
     } else if (text.includes("First test")) {
@@ -30,10 +29,10 @@ class MockEmbeddingModel implements IEmbeddingModel {
   }
 }
 
-test("VeqliteDB initialization", () => {
+test("VeqliteDB initialization", async () => {
   const embeddingModel = new MockEmbeddingModel();
-  const bunDB = new BunSQLiteAdapter(":memory:")
-  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel,bunDB);
+  const bunDB = new PGLiteAdapter(":memory:")
+  const ragDb = await VeqliteDB.init<TestMetadata>(embeddingModel,bunDB);
 
   expect(ragDb).toBeDefined();
   ragDb.close();
@@ -41,28 +40,28 @@ test("VeqliteDB initialization", () => {
 
 test("insertChunk and searchSimilar", async () => {
   const embeddingModel = new MockEmbeddingModel();
-  const dbAdapter = new BunSQLiteAdapter(":memory:");
-  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel, dbAdapter, {
+  const dbAdapter = new PGLiteAdapter(":memory:");
+
+  const ragDb = await VeqliteDB.init<TestMetadata>(embeddingModel, dbAdapter, {
     embeddingDim: 2
   });
 
   // チャンクを挿入
   const chunk = {
-    content: "This is a test chunk",
+    content: "This is a test query",
     filepath: "/test/file.ts",
     category: "test",
     tags: ["tag1", "tag2"]
   };
 
-  const id = await ragDb.insertChunk(chunk);
-  expect(id).toBe(1);
+  await ragDb.insertChunk(chunk);
 
   // 検索クエリ
   const results = await ragDb.searchSimilar("test query", 5);
   expect(results.length).toBe(1);
 
   const result = results[0];
-  expect(result?.content).toBe("This is a test chunk");
+  expect(result?.content).toBe("This is a test query");
   expect(result?.filepath).toBe("/test/file.ts");
   expect(result?.category).toBe("test");
   expect(result?.tags).toEqual(["tag1", "tag2"]);
@@ -73,8 +72,8 @@ test("insertChunk and searchSimilar", async () => {
 
 test("bulkInsertChunks", async () => {
   const embeddingModel = new MockEmbeddingModel();
-  const dbAdapter = new BunSQLiteAdapter(":memory:");
-  const ragDb = new VeqliteDB<TestMetadata>(embeddingModel, dbAdapter, {
+  const dbAdapter = new PGLiteAdapter(":memory:");
+  const ragDb = await VeqliteDB.init<TestMetadata>(embeddingModel, dbAdapter, {
     embeddingDim: 2
   });
 

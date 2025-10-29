@@ -27,12 +27,12 @@ export class VeqliteDB<T extends BaseMetadata = BaseMetadata> {
     await this.engine.initSchema();
   }
 
-  static async init(
+  static async init<T extends BaseMetadata>(
     embeddingModel: IEmbeddingModel,
     driver: IDatabaseDriver,
     options: RAGOptions = {}
   ) {
-    const _this = new VeqliteDB(embeddingModel, driver, options);
+    const _this = new VeqliteDB<T>(embeddingModel, driver, options);
     await _this.initSchema();
     return _this;
   }
