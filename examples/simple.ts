@@ -27,8 +27,7 @@ async function main() {
     // Create RAG database instance
     console.log("Setting up database...");
     console.log("Backend Type:",dbAdapter.type)
-    const rag = new VeqliteDB(embeddingModel, dbAdapter, {});
-    await rag.initSchema()
+    const rag = await VeqliteDB.init(embeddingModel, dbAdapter, {});
     console.log("Database setup completed!\n");
 
     // Add documents
