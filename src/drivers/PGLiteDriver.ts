@@ -1,13 +1,13 @@
 import { PGlite, type PGliteOptions } from "@electric-sql/pglite";
 import { vector } from '@electric-sql/pglite/vector';
+import type { DatabaseStatement, IDatabaseDriver } from "../types";
 
-import type { DatabaseStatement, ISQLDatabse } from "../db";
 
 /**
  * PGLite を使用した SQLiteDatabase アダプター
  * pgvector 拡張を利用してベクトル類似度検索をサポート
  */
-export class PGLiteAdapter implements ISQLDatabse {
+export class PGLiteAdapter implements IDatabaseDriver {
   readonly type = "pglite";
   private db: PGlite;
 

@@ -32,20 +32,20 @@
       "types": "./dist/index.d.ts"
     },
     "./node": {
-      "import": "./dist/adapters/NodeSQLiteAdapter.js",
-      "types": "./dist/adapters/NodeSQLiteAdapter.d.ts"
+      "import": "./dist/drivers/NodeSQLiteDriver.js",
+      "types": "./dist/drivers/NodeSQLiteDriver.d.ts"
     },
     "./bun": {
-      "import": "./dist/adapters/BunSQLiteAdapter.js",
-      "types": "./dist/adapters/BunSQLiteAdapter.d.ts"
+      "import": "./dist/drivers/BunSQLiteDriver.js",
+      "types": "./dist/drivers/BunSQLiteDriver.d.ts"
     },
     "./better-sqlite3": {
-      "import": "./dist/adapters/BetterSqlite3SQLiteAdapter.js",
-      "types": "./dist/adapters/BetterSqlite3SQLiteAdapter.d.ts"
+      "import": "./dist/drivers/BetterSqlite3SQLiteDriver.js",
+      "types": "./dist/drivers/BetterSqlite3SQLiteDriver.d.ts"
     },
     "./pglite": {
-      "import": "./dist/adapters/PGLiteAdapter.js",
-      "types": "./dist/adapters/PGLiteAdapter.d.ts"
+      "import": "./dist/drivers/PGLiteDriver.js",
+      "types": "./dist/drivers/PGLiteDriver.d.ts"
     }
   },
   "peerDependencies": {

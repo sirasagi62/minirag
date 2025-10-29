@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { load } from "sqlite-vec";
-import type { DatabaseStatement, ISQLDatabse } from "../db";
-export class BunSQLiteAdapter implements ISQLDatabse {
+import type { DatabaseStatement, IDatabaseDriver } from "../types";
+export class BunSQLiteAdapter implements IDatabaseDriver {
   readonly type = "sqlite";
   private db: Database;
 

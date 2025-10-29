@@ -1,5 +1,5 @@
 import { VeqliteDB, HFLocalEmbeddingModel } from "../src";
-import { PGLiteAdapter } from "../src/adapters/PGLiteAdapter";
+import { PGLiteAdapter } from "../src/drivers/PGLiteDriver";
 // Since it's being read from within the module, a relative path is used
 // If you installed veqlite via npm, use the Adapter as follows:
 // import { PGLiteAdapter } from "veqlite/pglite";
@@ -15,8 +15,8 @@ async function main() {
       "q8"
     );
     console.log("Model loaded successfully!\n");
-    console.log("Model Name: ",embeddingModel.modelname)
-    console.log("Embedding Dimension: ",embeddingModel.dim)
+    console.log("Model Name: ", embeddingModel.modelname)
+    console.log("Embedding Dimension: ", embeddingModel.dim)
 
     // On macOS
     // c.f. https://bun.com/docs/runtime/sqlite#for-macos-users
@@ -26,7 +26,7 @@ async function main() {
     // const bunsqlite = new BunSQLiteAdapter(":memory:");
     // Create RAG database instance
     console.log("Setting up database...");
-    console.log("Backend Type:",dbAdapter.type)
+    console.log("Backend Type:", dbAdapter.type)
     const rag = await VeqliteDB.init(embeddingModel, dbAdapter, {});
     console.log("Database setup completed!\n");
 
@@ -41,7 +41,7 @@ async function main() {
       filepath: "rag-intro"
     });
     await rag.insertChunk({
-      content: "Minirag is a simple RAG implementation in TypeScript",
+      content: "Veqlite is a simple RAG implementation in TypeScript",
       filepath: "veqlite-intro"
     });
     console.log("Documents added successfully!\n");

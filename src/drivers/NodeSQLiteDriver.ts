@@ -1,15 +1,16 @@
-import BetterSqlite3 from "better-sqlite3";
-import { load } from "sqlite-vec";
-import type { DatabaseStatement, ISQLDatabse } from "../db";
-
-export class BetterSqlite3Adapter implements ISQLDatabse {
-  private db: BetterSqlite3.Database;
+import { DatabaseSync } from "node:sqlite";
+import { load } from "sqlite-vec"
+import type { DatabaseStatement, IDatabaseDriver } from "../types";
+export class NodeSQLiteAdapter implements IDatabaseDriver {
+  private db: DatabaseSync;
   readonly type = "sqlite";
 
   constructor(path: string) {
-    this.db = new BetterSqlite3(path);
+    this.db = new DatabaseSync(path, {
+      allowExtension: true
+    });
     this.loadVecExtension();
-  }
+  };
 
   private loadVecExtension() {
     load(this.db);
@@ -26,13 +27,6 @@ export class BetterSqlite3Adapter implements ISQLDatabse {
       all: async (...args) => stmt.all(...args),
     };
   }
-
-
-
-  // transaction (fn: (batch: any[]) => void): (batch: any[]) => void {
-  //   const tx = this.db.transaction(fn);
-  //   return tx;
-  // }
 
   transaction(fn: (batch: any[]) => Promise<void>): (batch: any[]) => Promise<void> {
     const tx = async (_batch: any[]) => {
