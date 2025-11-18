@@ -17,9 +17,11 @@ For more details about the project structure and API, see [overview.md](./overvi
 
 ```typescript
 import { VeqliteDB, HFLocalEmbeddingModel } from "veqlite";
-import { BunSQLiteAdapter } from "veqlite/bun";
-//import { NodeSQLiteAdapter } from "veqlite/node"
-//import { BetterSqlite3Adapter } from "veqlite/better-sqlite3"
+
+import { PGLiteAdapter } from "veqlite/pglite"
+// import { BunSQLiteAdapter } from "veqlite/bun";
+// import { NodeSQLiteAdapter } from "veqlite/node"
+// import { BetterSqlite3Adapter } from "veqlite/better-sqlite3"
 // Simple example of using veqlite
 async function main() {
   // Initialize the embedding model
